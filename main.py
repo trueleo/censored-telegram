@@ -57,7 +57,8 @@ def start(update, context):
 
 def main():
 
-    updater = Updater(os.environ.get('BOTKEY'), use_context=True)
+    TOKEN = os.environ.get('BOTKEY')
+    updater = Updater(TOKEN), use_context=True)
 
     handlers = [
 
@@ -71,8 +72,13 @@ def main():
         updater.dispatcher.add_handler(handler)
 
 
-    updater.start_polling()
+    PORT = int(os.environ.get('PORT', '8443'))
+    updater = Updater(TOKEN)
 
+    updater.start_webhook(listen="0.0.0.0",
+                          port=PORT,
+                           url_path=TOKEN)
+    updater.bot.set_webhook("https://censoredtelebot.herokuapp.com/" + TOKEN)
     updater.idle()
 
 
