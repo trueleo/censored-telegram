@@ -55,7 +55,7 @@ def start(update, context):
 
 def main():
 
-    updater = Updater('TOKEN', use_context=True)
+    updater = Updater(os.environ.get('BOTKEY'), use_context=True)
 
     handlers = [
 
