@@ -1,6 +1,7 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
 # import logging
+import os
 import re
 from vasuki import generate_gibberish as gibname
 from telegram.utils import helpers
@@ -18,10 +19,10 @@ def handler_media(update, context):
     sharekey  = gibname('large')
     if update.message.photo:
         file_id = update.message.photo[0].file_id
-        key_to_file_id[sharekey] = (file_id, PHOTO, update.message.text)
+        key_to_file_id[sharekey] = (file_id, PHOTO, update.message.caption)
     elif update.message.video:
         file_id = update.message.video.file_id
-        key_to_file_id[sharekey] = (file_id, VIDEO, update.message.text)
+        key_to_file_id[sharekey] = (file_id, VIDEO, update.message.caption)
     elif update.message.text:
         update.message.reply_text("Share any video or photo to create censored post")
         return
@@ -55,10 +56,9 @@ def start(update, context):
 
 def main():
 
-    updater = Updater('TOKEN', use_context=True)
+    updater = Updater(os.environ.get('BOTKEY'), use_context=True)
 
     handlers = [
-
         CommandHandler( "start", handler_args, Filters.regex("start(?=\ [a-z]+)")),
         CommandHandler( "start", start),
         MessageHandler( Filters.all, handler_media)
