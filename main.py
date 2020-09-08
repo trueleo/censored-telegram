@@ -20,10 +20,10 @@ def handler_media(update, context):
     sharekey  = gibname('large')
     if update.message.photo:
         file_id = update.message.photo[0].file_id
-        key_to_file_id[sharekey] = (file_id, PHOTO)
+        key_to_file_id[sharekey] = (file_id, PHOTO, update.message.caption)
     elif update.message.video:
         file_id = update.message.video.file_id
-        key_to_file_id[sharekey] = (file_id, VIDEO)
+        key_to_file_id[sharekey] = (file_id, VIDEO, update.message.caption)
     elif update.message.text:
         update.message.reply_text("Share any video or photo to create censored post")
         return
@@ -42,11 +42,11 @@ def handler_media(update, context):
 def handler_args(update, context):
     sharekey = context.args[0]
     try:
-        file_id, file_type = key_to_file_id[sharekey]
+        file_id, file_type, file_caption = key_to_file_id[sharekey]
         if file_type == PHOTO:
-            update.message.reply_photo(file_id)
+            update.message.reply_photo(file_id, caption=file_caption)
         if file_type == VIDEO:
-            update.message.reply_video(file_id)
+            update.message.reply_video(file_id, caption=file_caption)
 
     except KeyError:
         update.message.reply_text('Media is no longer availible')
