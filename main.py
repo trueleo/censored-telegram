@@ -18,12 +18,14 @@ VIDEO = 1
 
 def handler_media(update, context):
     sharekey  = gibname('large')
+    file_caption = update.message.caption
+
     if update.message.photo:
         file_id = update.message.photo[0].file_id
-        key_to_file_id[sharekey] = (file_id, PHOTO, update.message.caption)
+        key_to_file_id[sharekey] = (file_id, PHOTO, file_caption)
     elif update.message.video:
         file_id = update.message.video.file_id
-        key_to_file_id[sharekey] = (file_id, VIDEO, update.message.caption)
+        key_to_file_id[sharekey] = (file_id, VIDEO, file_caption)
     elif update.message.text:
         update.message.reply_text("Share any video or photo to create censored post")
         return
@@ -33,7 +35,7 @@ def handler_media(update, context):
 
 
     url = helpers.create_deep_linked_url(context.bot.get_me().username, sharekey)
-    text = update.message.caption
+    text = "Censored media" if file_caption is None else file_caption
     keyboard = InlineKeyboardMarkup.from_button(
         InlineKeyboardButton(text='View', url=url)
     )
