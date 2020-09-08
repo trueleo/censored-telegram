@@ -33,7 +33,7 @@ def handler_media(update, context):
 
 
     url = helpers.create_deep_linked_url(context.bot.get_me().username, sharekey)
-    text = 'Censored Media'
+    text = update.message.caption
     keyboard = InlineKeyboardMarkup.from_button(
         InlineKeyboardButton(text='View', url=url)
     )
