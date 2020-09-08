@@ -75,7 +75,7 @@ def main():
 
     updater.start_webhook(listen="0.0.0.0",
                           port=PORT,
-                           url_path=TOKEN)
+                           url_path=os.environ.get('BOTKEY'))
     updater.bot.set_webhook("https://censortelebot.herokuapp.com/" + TOKEN)
     updater.idle()
 
