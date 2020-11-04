@@ -1,31 +1,24 @@
 from telegram import InlineKeyboardMarkup, InlineKeyboardButton
 from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
-# import logging
-import re
+import database
+from database import DataNotFound
 import os
-
-from vasuki import generate_gibberish as gibname
+import re
+import shortuuid
 from telegram.utils import helpers
 
-# logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-
-# logger = logging.getLogger(__name__)
-
-key_to_file_id = dict()
-
-PHOTO = 0
-VIDEO = 1
+uuid_to_file_id = dict()
 
 def handler_media(update, context):
-    sharekey  = gibname('large')
-    file_caption = update.message.caption
+    uuid = shortuuid.uuid()
+    file_type = file_id = None
 
     if update.message.photo:
+        file_type = 'photo'
         file_id = update.message.photo[0].file_id
-        key_to_file_id[sharekey] = (file_id, PHOTO, file_caption)
     elif update.message.video:
+        file_type = 'video'
         file_id = update.message.video.file_id
-        key_to_file_id[sharekey] = (file_id, VIDEO, file_caption)
     elif update.message.text:
         update.message.reply_text("Share any video or photo to create censored post")
         return
@@ -33,29 +26,48 @@ def handler_media(update, context):
         update.message.reply_text("Media format is not supported yet")
         return
 
+    tup = (file_id, file_type, update.message.caption)
+    uuid_to_file_id[uuid] = tup
+    database.push(uuid, *tup)
 
-    url = helpers.create_deep_linked_url(context.bot.get_me().username, sharekey)
-    text = "Censored media" if file_caption is None else file_caption
+    url = helpers.create_deep_linked_url(context.bot.get_me().username, uuid)
+    text = 'Censored Media'
     keyboard = InlineKeyboardMarkup.from_button(
         InlineKeyboardButton(text='View', url=url)
     )
-    update.message.reply_text(text, reply_markup = keyboard)
+    update.message.reply_text(text, reply_markup=keyboard)
+
 
 def handler_args(update, context):
-    sharekey = context.args[0]
+    uuid = context.args[0]
+    media_not_found = False
     try:
-        file_id, file_type, file_caption = key_to_file_id[sharekey]
-        if file_type == PHOTO:
-            update.message.reply_photo(file_id, caption=file_caption)
-        if file_type == VIDEO:
-            update.message.reply_video(file_id, caption=file_caption)
-
+        file_id, file_type, file_caption = uuid_to_file_id[uuid]
     except KeyError:
-        update.message.reply_text('Media is no longer availible')
+        try:
+            (file_id, file_type, file_caption) = database.get(uuid)
+        except DataNotFound:
+            media_not_found = True
+        except:
+            media_not_found = True
+            update.message.reply_text('Internal error')
+
+    if media_not_found:
+        update.message.reply_text('Media not found')
         return
+    if file_type == 'photo':
+        update.message.reply_photo(file_id, caption=file_caption)
+    elif file_type == 'video':
+        update.message.reply_video(file_id, caption=file_caption)
+    else:
+        update.message.reply_text('Unknown file')
+    return
+
 
 def start(update, context):
-    update.message.reply_text("Hello, Share any video or photo to create censored post. Documents and files are not supported yet.")
+    update.message.reply_text(
+        "Hello, Share any video or photo to create censored post. Documents and files are not supported yet.")
+
 
 def main():
 
@@ -63,16 +75,13 @@ def main():
     updater = Updater(TOKEN, use_context=True)
 
     handlers = [
-
-        CommandHandler( "start", handler_args, Filters.regex("start(?=\ [a-z]+)")),
-        CommandHandler( "start", start),
-        MessageHandler( Filters.all, handler_media)
-
+        CommandHandler("start", handler_args, Filters.regex("start\ [0-9A-Za-z]{10,50}")),
+        CommandHandler("start", start),
+        MessageHandler(Filters.all, handler_media)
     ]
 
     for handler in handlers:
         updater.dispatcher.add_handler(handler)
-
 
     PORT = int(os.environ.get('PORT', '8443'))
 
