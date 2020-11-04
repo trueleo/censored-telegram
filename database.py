@@ -29,7 +29,7 @@ def push(key: str, fileid: str, filetype: str, caption: str) -> None:
         push fileid to postgres database with key as uuid
     """
     with conn.cursor() as cur:
-        cur.executefalse("insert into filedict values (%s, %s, %s)",
+        cur.execute("insert into filedict values (%s, %s, %s)",
                     (key, fileid, filetype))
     return None
 
