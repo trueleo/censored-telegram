@@ -41,7 +41,7 @@ def get(key: str):
     data = None
     with conn.cursor() as cur:
         cur.execute(
-            "SELECT fileid, filetype, caption FROM filedict WHERE key=%s", (key,))
+            "SELECT fileid, filetype, filecaption FROM filedict WHERE key=%s", (key,))
         data = cur.fetchone()
     if data is None:
         raise DataNotFound
@@ -54,3 +54,4 @@ class DataNotFound(Exception):
     Raised when lookup for data fails
     """
     pass
+
