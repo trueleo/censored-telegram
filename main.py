@@ -6,10 +6,11 @@ import os
 import re
 import shortuuid
 from telegram.utils import helpers
+from telegram import Update
 
 uuid_to_file_id = dict()
 
-def handler_media(update, context):
+def handler_media(update: Update, context):
     uuid = shortuuid.uuid()
     file_type = file_id = None
 
@@ -19,6 +20,9 @@ def handler_media(update, context):
     elif update.message.video:
         file_type = 'video'
         file_id = update.message.video.file_id
+    elif update.message.animation:
+        file_type = 'gif'
+        file_id = update.message.animation.file_id
     elif update.message.text:
         update.message.reply_text("Share any video or photo to create censored post")
         return
@@ -38,7 +42,7 @@ def handler_media(update, context):
     update.message.reply_text(text, reply_markup=keyboard)
 
 
-def handler_args(update, context):
+def handler_args(update: Update, context):
     uuid = context.args[0]
     media_not_found = False
     try:
@@ -59,6 +63,8 @@ def handler_args(update, context):
         update.message.reply_photo(file_id, caption=file_caption)
     elif file_type == 'video':
         update.message.reply_video(file_id, caption=file_caption)
+    elif file_type == 'gif':
+        update.message.reply_animation(file_id)
     else:
         update.message.reply_text('Unknown file')
     return
