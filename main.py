@@ -12,7 +12,7 @@ BOT_TOKEN = os.environ.get('BOTKEY')
 API_ID = os.environ.get('API_ID')
 API_HASH = os.environ.get('API_HASH')
 
-app = Client(api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
+app = Client(session_name=':memory:', api_id=API_ID, api_hash=API_HASH, bot_token=BOT_TOKEN)
 
 uuid_media = dict()
 group_uuid = dict()
