@@ -10,7 +10,7 @@
 import psycopg2
 import os
 
-create_table = "CREATE TABLE IF NOT EXISTS nokeydb (key varchar(35) not null, fileid varchar(100) not null, filetype vachar(10), filecaption varchar(100));"
+create_table = "CREATE TABLE IF NOT EXISTS nokeydb (key varchar(35) not null, fileid varchar(100) not null, filetype varchar(10), filecaption varchar(100));"
 drop_table = "drop table nokeydb;"
 
 flag_create_table = os.environ.get('CREATE_TABLE')
