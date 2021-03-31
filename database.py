@@ -16,18 +16,19 @@ drop_table = "drop table nokeydb;"
 flag_create_table = os.environ.get('CREATE_TABLE')
 flag_drop_table = os.environ.get('DROP_TABLE')
 
-dsn = 'dbname=testdb user=satyam'
-# dsn = os.environ.get('DATABASE_URL')
+# dsn = 'dbname=testdb user=satyam'
+dsn = os.environ.get('DATABASE_URL')
 conn = psycopg2.connect(dsn)
 conn.set_session(autocommit=True)
+
+if flag_drop_table == 'true':
+    with conn.cursor() as cur:
+        cur.execute(drop_table)
 
 if flag_create_table == 'true':
     with conn.cursor() as cur:
         cur.execute(create_table)
 
-if flag_drop_table == 'true':
-    with conn.cursor() as cur:
-        cur.execute(drop_table)
 
 def push(key: str, file_id: str, file_type: str, caption: str):
     """
