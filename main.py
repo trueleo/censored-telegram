@@ -1,98 +1,99 @@
-from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-from telegram.ext import Updater, CommandHandler, Filters, MessageHandler
+from pyrogram import Client, filters
+from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, InputMediaPhoto, InputMediaVideo
 import database
-from database import DataNotFound
-import os
-import re
+import asyncio
 import shortuuid
-from telegram.utils import helpers
-from telegram import Update
+from collections import defaultdict
 
-uuid_to_file_id = dict()
+bot_info = None
+app = Client('satyamtestbot')
+uuid_media = dict()
+group_uuid = dict()
 
-def handler_media(update: Update, context):
-    uuid = shortuuid.uuid()
-    file_type = file_id = None
-
-    if update.message.photo:
-        file_type = 'photo'
-        file_id = update.message.photo[0].file_id
-    elif update.message.video:
-        file_type = 'video'
-        file_id = update.message.video.file_id
-    elif update.message.animation:
-        file_type = 'gif'
-        file_id = update.message.animation.file_id
-    elif update.message.text:
-        update.message.reply_text(
-            "Share any video or photo to create censored post")
-        return
-    else:
-        update.message.reply_text("Media format is not supported yet")
-        return
-
-    tup = (file_id, file_type, update.message.caption)
-    uuid_to_file_id[uuid] = tup
-    database.push(uuid, *tup)
-
-    url = helpers.create_deep_linked_url(context.bot.get_me().username, uuid)
+async def send_deeplink(message: Message, username: str, uuid: str):
     text = 'Censored Media'
-    keyboard = InlineKeyboardMarkup.from_button(
-        InlineKeyboardButton(text='View', url=url)
+    keyboard = InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton(text='View', url="t.me/{0}/?start={1}".format(username, uuid))]
+        ]
     )
-    update.message.reply_text(text, reply_markup=keyboard)
+    await message.reply_text(text, reply_markup=keyboard)
 
+@app.on_message( filters.private & filters.media )
+async def handler_media(client, message: Message):
 
-def handler_args(update: Update, context):
-    uuid = context.args[0]
-    media_not_found = False
-    try:
-        file_id, file_type, file_caption = uuid_to_file_id[uuid]
-    except KeyError:
+    file_id = file_type = None
+    uuid = None
+    group = message.media_group_id
+
+    for media_type in ("photo", "video", "animation"):
         try:
-            (file_id, file_type, file_caption) = database.get(uuid)
-        except DataNotFound:
-            media_not_found = True
+            media = getattr(message, media_type)
+            file_id = media.file_id
+            file_type = media_type
         except:
-            media_not_found = True
-            update.message.reply_text('Internal error')
+            continue
 
-    if media_not_found:
-        update.message.reply_text('Media not found')
+    if not file_id:
+        await message.reply_text("Share any video, photo or gif to create censored post")
         return
-    if file_type == 'photo':
-        update.message.reply_photo(file_id, caption=file_caption)
-    elif file_type == 'video':
-        update.message.reply_video(file_id, caption=file_caption)
-    elif file_type == 'gif':
-        update.message.reply_animation(file_id)
+
+    global bot_info
+    if not bot_info:
+        bot_info = await client.get_me()
+
+    media_tup = (file_id, file_type, message.caption)
+
+    if not group:
+        uuid = shortuuid.uuid()
+        uuid_media[uuid] = media_tup
+        await send_deeplink(message, bot_info.username, uuid)
     else:
-        update.message.reply_text('Unknown file')
-    return
+        try:
+            uuid = group_uuid[group]
+            uuid_media[uuid].append(media_tup)
+        except KeyError:
+            uuid = shortuuid.uuid()
+            uuid_media[uuid] = [media_tup]
+            group_uuid[group] = uuid
+            await send_deeplink(message, bot_info.username, uuid)
+    database.push(uuid, *media_tup)
 
+@app.on_message(filters.command("start"))
+async def handle_start(client, message: Message):
 
-def start(update, context):
-    update.message.reply_text(
-        "Hello, Share any video or photo to create censored post. Documents and files are not supported yet.")
+    try:
+        uuid = message.command[1]
+    except IndexError:
+        await message.reply_text("Hello, Share any video or photo to create censored post. Documents and files are not supported yet.")
+        return
 
+    try:
+        data = uuid_media[uuid]
+    except KeyError:
+        data = database.get(uuid)
+        uuid_media[uuid] = data
 
-def main():
+    finally:
+        if type(data) is tuple:
+            (file_id, file_type, caption) = data
+            if caption is None:
+                await message.reply_cached_media(file_id)
+            else:
+                await message.reply_cached_media(file_id, caption=caption)
 
-    updater = Updater(os.environ.get('BOTKEY'), use_context=True)
+        elif type(data) is list:
+            input_medias = []
+            for file_id, file_type, caption in data:
+                if (file_type == 'photo'):
+                    input_medias.append(InputMediaPhoto(file_id, caption))
+                elif (file_type == 'video'):
+                    input_medias.append(InputMediaVideo(file_id, caption=caption))
+            await message.reply_media_group( input_medias )
 
-    handlers = [
-        CommandHandler("start", handler_args, Filters.regex("start\ [0-9A-Za-z]{10,50}")),
-        CommandHandler("start", start),
-        MessageHandler(Filters.all, handler_media)
-    ]
-
-    for handler in handlers:
-        updater.dispatcher.add_handler(handler)
-
-    updater.start_polling()
-
-    updater.idle()
+        else:
+            await message.reply_text("Not found")
 
 
 if __name__ == '__main__':
-    main()
+    app.run()

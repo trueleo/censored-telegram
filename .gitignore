@@ -1,3 +1,6 @@
-.env
-.vscode
-__pycache__
+__pycache__/
+.env/
+.vscode/
+config.ini
+*.session
+*.session-journal

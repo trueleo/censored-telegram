@@ -5,18 +5,19 @@
 #  fileid      | character varying     |           | not null |
 #  filetype    | character varying(10) |           | not null |
 #  filecaption | character varying(80) |           |          |
-# Indexes:
-#     "filedict_pkey" PRIMARY KEY, btree (key)
-
+#  groupid   | character varying(30) |           |          |
 
 import psycopg2
 import os
 
-create_table = "CREATE TABLE IF NOT EXISTS filedict (key varchar(64) primary key, fileid varchar not null, filetype varchar(10) not null, filecaption varchar(80))"
+create_table = "CREATE TABLE IF NOT EXISTS nokeydb (key varchar(35) not null, fileid varchar(100) not null, filetype vachar(10), filecaption varchar(100));"
+drop_table = "drop table nokeydb;"
+
 flag_create_table = os.environ.get('CREATE_TABLE')
+flag_drop_table = os.environ.get('DROP_TABLE')
 
 # dsn = 'dbname=testdb user=satyam'
-dsn = os.environ.get('DATABASE_URL')
+dsn = os.environ.get('DATABASE_URL')i
 conn = psycopg2.connect(dsn)
 conn.set_session(autocommit=True)
 
@@ -24,32 +25,29 @@ if flag_create_table == 'true':
     with conn.cursor() as cur:
         cur.execute(create_table)
 
-def push(key: str, fileid: str, filetype: str, caption: str) -> None:
+if flag_drop_table == 'true':
+    with conn.cursor() as cur:
+        cur.execute(drop_table)
+
+def push(key: str, file_id: str, file_type: str, caption: str):
     """
-        push fileid to postgres database with key as uuid
+        push file_id to postgres database with key as uuid
     """
     with conn.cursor() as cur:
-        cur.execute("insert into filedict values (%s, %s, %s)",
-                    (key, fileid, filetype))
-    return None
+        cur.execute("insert into nokeydb values (%s, %s, %s, %s)", (key, file_id, file_type, caption))
 
 
-def get(key: str):
+def get(key: str) -> list:
     """
         get fileid from database based on key
+
+        returns List( ( file_id, file_type, caption ) )
     """
     data = None
     with conn.cursor() as cur:
-        cur.execute("SELECT fileid, filetype, caption FROM filedict WHERE key=%s", (key,))
-        data = cur.fetchone()
-    if data is None:
-        raise DataNotFound
-    else:
-        return data
-
-
-class DataNotFound(Exception):
-    """
-    Raised when lookup for data fails
-    """
-    pass
+        cur.execute("SELECT fileid, filetype, caption FROM nokeydb WHERE key=%s", (key,))
+        data = cur.fetchall()
+        if ( type(data) is list and ( len(data) == 1 ) ):
+            return data[0]
+        else:
+            return data
