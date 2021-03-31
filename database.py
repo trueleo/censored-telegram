@@ -16,8 +16,8 @@ drop_table = "drop table nokeydb;"
 flag_create_table = os.environ.get('CREATE_TABLE')
 flag_drop_table = os.environ.get('DROP_TABLE')
 
-# dsn = 'dbname=testdb user=satyam'
-dsn = os.environ.get('DATABASE_URL')i
+dsn = 'dbname=testdb user=satyam'
+# dsn = os.environ.get('DATABASE_URL')
 conn = psycopg2.connect(dsn)
 conn.set_session(autocommit=True)
 
