@@ -4,8 +4,6 @@
 #  key         | character varying(64) |           | not null |
 #  fileid      | character varying     |           | not null |
 #  filetype    | character varying(10) |           | not null |
-#  filecaption | character varying(80) |           |          |
-#  groupid   | character varying(30) |           |          |
 
 import psycopg2
 import os
@@ -46,7 +44,7 @@ def get(key: str) -> list:
     """
     data = None
     with conn.cursor() as cur:
-        cur.execute("SELECT fileid, filetype, caption FROM nokeydb WHERE key=%s", (key,))
+        cur.execute("SELECT fileid, filetype, filecaption FROM nokeydb WHERE key=%s", (key,))
         data = cur.fetchall()
         if ( type(data) is list and ( len(data) == 1 ) ):
             return data[0]
