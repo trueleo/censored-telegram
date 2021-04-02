@@ -33,7 +33,7 @@ async def handler_media(client, message: Message):
     uuid = None
     group = message.media_group_id
 
-    for media_type in ("photo", "video", "animation"):
+    for media_type in ("photo", "video", "animation", "audio", "document", "sticker", "voice"):
         try:
             media = getattr(message, media_type)
             file_id = media.file_id
@@ -42,7 +42,7 @@ async def handler_media(client, message: Message):
             continue
 
     if not file_id:
-        await message.reply_text("Share any video, photo or gif to create censored post")
+        await message.reply_text("This type of media is not supported yet")
         return
 
     global bot_info
@@ -72,7 +72,7 @@ async def handle_start(client, message: Message):
     try:
         uuid = message.command[1]
     except IndexError:
-        await message.reply_text("Hello, Share any video or photo to create censored post. Documents and files are not supported yet.")
+        await message.reply_text("Share any video(s), photo(s), gif, audio, document or sticker to create a new post. You can then select the message and forward it to wherever you like.")
         return
 
     try:
