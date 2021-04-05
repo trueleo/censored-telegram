@@ -46,7 +46,9 @@ def get(key: str):
     with conn.cursor() as cur:
         cur.execute("SELECT fileid, filetype, filecaption FROM nokeydb WHERE key=%s", (key,))
         data = cur.fetchall()
-        if ( type(data) is list and ( len(data) == 1 ) ):
+        if ( len(data) == 1 ):
             return data[0]
-        else:
+        elif ( len(data) > 1):
             return data
+        else
+            return None
