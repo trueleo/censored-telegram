@@ -50,5 +50,5 @@ def get(key: str):
             return data[0]
         elif ( len(data) > 1):
             return data
-        else
+        else:
             return None
