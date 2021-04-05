@@ -64,7 +64,7 @@ async def handler_media(client, message: Message):
             uuid = shortuuid.uuid()
             uuid_media[uuid] = [media_tup]
             group_uuid[group] = uuid
-            await send_deeplink(message, bot_info.username, uuid, text)
+            await send_deeplink(message, bot_info.username, uuid, "Censored Album")
     database.push(uuid, *media_tup)
 
 @app.on_message(filters.command("start"))
