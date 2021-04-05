@@ -17,11 +17,11 @@ app = Client(session_name=':memory:', api_id=API_ID, api_hash=API_HASH, bot_toke
 uuid_media = dict()
 group_uuid = dict()
 
-async def send_deeplink(message: Message, username: str, uuid: str):
-    text = 'Censored Media'
+async def send_deeplink(message: Message, bot_username: str, uuid: str, text: str):
+    text = text
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton(text='View', url="t.me/{0}/?start={1}".format(username, uuid))]
+            [InlineKeyboardButton(text='View', url="t.me/{0}/?start={1}".format(bot_username, uuid))]
         ]
     )
     await message.reply_text(text, reply_markup=keyboard)
@@ -50,11 +50,12 @@ async def handler_media(client, message: Message):
         bot_info = await client.get_me()
 
     media_tup = (file_id, file_type, message.caption)
+    text = "Censored {0}".format(file_type.capitalize())
 
     if not group:
         uuid = shortuuid.uuid()
         uuid_media[uuid] = media_tup
-        await send_deeplink(message, bot_info.username, uuid)
+        await send_deeplink(message, bot_info.username, uuid, text)
     else:
         try:
             uuid = group_uuid[group]
@@ -63,7 +64,7 @@ async def handler_media(client, message: Message):
             uuid = shortuuid.uuid()
             uuid_media[uuid] = [media_tup]
             group_uuid[group] = uuid
-            await send_deeplink(message, bot_info.username, uuid)
+            await send_deeplink(message, bot_info.username, uuid, text)
     database.push(uuid, *media_tup)
 
 @app.on_message(filters.command("start"))
