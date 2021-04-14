@@ -21,7 +21,7 @@ async def send_deeplink(message: Message, bot_username: str, uuid: str, text: st
     text = text
     keyboard = InlineKeyboardMarkup(
         [
-            [InlineKeyboardButton(text='View', url="t.me/{0}/?start={1}".format(bot_username, uuid))]
+            [InlineKeyboardButton(text='View', url="t.me/{0}?start={1}".format(bot_username, uuid))]
         ]
     )
     await message.reply_text(text, reply_markup=keyboard)
